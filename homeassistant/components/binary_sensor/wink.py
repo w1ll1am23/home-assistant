@@ -53,19 +53,6 @@ class WinkBinarySensorDevice(WinkDevice, BinarySensorDevice, Entity):
         self._unit_of_measurement = self.wink.UNIT
         self.capability = self.wink.capability()
 
-    def _pubnub_update(self, message, channel):
-        try:
-            if 'data' in message:
-                json_data = json.dumps(message.get('data'))
-            else:
-                json_data = message
-            self.wink.pubnub_update(json.loads(json_data))
-            self.update_ha_state()
-        except (AttributeError, KeyError):
-            error = "Pubnub returned invalid json for " + self.name
-            logging.getLogger(__name__).error(error)
-            self.update_ha_state(True)
-
     @property
     def is_on(self):
         """Return true if the binary sensor is on."""

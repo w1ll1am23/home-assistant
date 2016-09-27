@@ -14,8 +14,9 @@ from homeassistant.const import CONF_ACCESS_TOKEN, ATTR_BATTERY_LEVEL, \
                                 CONF_EMAIL, CONF_PASSWORD
 from homeassistant.helpers.entity import Entity
 import homeassistant.helpers.config_validation as cv
+from pubnub.pubnub import SubscribeCallback, PNOperationType, PNStatusCategory
 
-REQUIREMENTS = ['python-wink==0.10.0', 'pubnub==3.8.2']
+REQUIREMENTS = ['python-wink==0.10.0']
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -63,7 +64,6 @@ def setup(hass, config):
     if user_agent:
         pywink.set_user_agent(user_agent)
 
-    from pubnub import Pubnub
     access_token = config[DOMAIN].get(CONF_ACCESS_TOKEN)
 
     if access_token:
@@ -76,10 +76,14 @@ def setup(hass, config):
         pywink.set_wink_credentials(email, password, client_id,
                                     client_secret)
 
+    from pubnub.pnconfiguration import PNConfiguration
+    from pubnub.pubnub import PubNub
+    pywink.set_bearer_token(config[DOMAIN][CONF_ACCESS_TOKEN])
+    pnconfig = PNConfiguration()
+    pnconfig.subscribe_key = pywink.get_subscription_key()
+    pnconfig.ssl = True
     global SUBSCRIPTION_HANDLER
-    SUBSCRIPTION_HANDLER = Pubnub(
-        'N/A', pywink.get_subscription_key(), ssl_on=True)
-    SUBSCRIPTION_HANDLER.set_heartbeat(120)
+    SUBSCRIPTION_HANDLER = PubNub(pnconfig)
 
     # Load components for the devices in Wink that we support
     for component in WINK_COMPONENTS:
@@ -92,32 +96,21 @@ class WinkDevice(Entity):
 
     def __init__(self, wink):
         """Initialize the Wink device."""
-        from pubnub import Pubnub
+        from pubnub.pnconfiguration import PNConfiguration
+        from pubnub.pubnub import PubNub
+
         self.wink = wink
         self._battery = self.wink.battery_level
         if self.wink.pubnub_channel in CHANNELS:
-            pubnub = Pubnub('N/A', self.wink.pubnub_key, ssl_on=True)
-            pubnub.set_heartbeat(120)
-            pubnub.subscribe(self.wink.pubnub_channel,
-                             self._pubnub_update,
-                             error=self._pubnub_error)
+            pnconfig = PNConfiguration()
+            pnconfig.subscribe_key = self.wink.pubnub_key
+            pnconfig.ssl = True
+            pubnub = PubNub(pnconfig)
+            pubnub_listener = PubNubCallback(self)
+            pubnub.add_listener(pubnub_listener)
+            pubnub.subscribe().channels(self.wink.pubnub_channel).execute()
         else:
             CHANNELS.append(self.wink.pubnub_channel)
-            SUBSCRIPTION_HANDLER.subscribe(self.wink.pubnub_channel,
-                                           self._pubnub_update,
-                                           error=self._pubnub_error)
-
-    def _pubnub_update(self, message, channel):
-        try:
-            self.wink.pubnub_update(json.loads(message))
-            self.update_ha_state()
-        except (AttributeError, KeyError):
-            error = "Pubnub returned invalid json for " + self.name
-            logging.getLogger(__name__).error(error)
-            self.update_ha_state(True)
-
-    def _pubnub_error(self, message):
-        _LOGGER.error("Error on pubnub update for " + self.wink.name())
 
     @property
     def unique_id(self):
@@ -154,5 +147,29 @@ class WinkDevice(Entity):
     @property
     def _battery_level(self):
         """Return the battery level."""
+<<<<<<< HEAD
         if self.wink.battery_level is not None:
             return self.wink.battery_level * 100
+=======
+        return self.wink.battery_level * 100
+
+class PubNubCallback(SubscribeCallback):
+    def __init__(self, entity):
+        self.entity = entity
+
+    def status(self, pubnub, status):
+        if status.operation == PNOperationType.PNSubscribeOperation \
+                and status.category == PNStatusCategory.PNConnectedCategory:
+            print("connected")
+
+    def presence(self, pubnub, presence):
+        pass
+
+    def message(self, pubnub, message):
+        if 'data' in message.message:
+            json_data = json.dumps(message.message.get('data'))
+        else:
+            json_data = message.message
+        self.entity.wink.pubnub_update(json.loads(json_data))
+        self.entity.update_ha_state()
+>>>>>>> idk
