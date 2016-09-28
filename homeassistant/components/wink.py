@@ -5,7 +5,6 @@ For more details about this component, please refer to the documentation at
 https://home-assistant.io/components/wink/
 """
 import logging
-import json
 
 import voluptuous as vol
 
@@ -14,7 +13,6 @@ from homeassistant.const import CONF_ACCESS_TOKEN, ATTR_BATTERY_LEVEL, \
                                 CONF_EMAIL, CONF_PASSWORD
 from homeassistant.helpers.entity import Entity
 import homeassistant.helpers.config_validation as cv
-from pubnub.pubnub import SubscribeCallback, PNOperationType, PNStatusCategory
 
 REQUIREMENTS = ['python-wink==0.10.0']
 
@@ -79,11 +77,8 @@ def setup(hass, config):
     from pubnub.pnconfiguration import PNConfiguration
     from pubnub.pubnub import PubNub
     pywink.set_bearer_token(config[DOMAIN][CONF_ACCESS_TOKEN])
-    pnconfig = PNConfiguration()
-    pnconfig.subscribe_key = pywink.get_subscription_key()
-    pnconfig.ssl = True
     global SUBSCRIPTION_HANDLER
-    SUBSCRIPTION_HANDLER = PubNub(pnconfig)
+    SUBSCRIPTION_HANDLER = pubnub_wink.PubNubWinkHandler(pywink.get_subscription_key())
 
     # Load components for the devices in Wink that we support
     for component in WINK_COMPONENTS:
@@ -96,21 +91,15 @@ class WinkDevice(Entity):
 
     def __init__(self, wink):
         """Initialize the Wink device."""
-        from pubnub.pnconfiguration import PNConfiguration
-        from pubnub.pubnub import PubNub
 
         self.wink = wink
         self._battery = self.wink.battery_level
-        if self.wink.pubnub_channel in CHANNELS:
-            pnconfig = PNConfiguration()
-            pnconfig.subscribe_key = self.wink.pubnub_key
-            pnconfig.ssl = True
-            pubnub = PubNub(pnconfig)
-            pubnub_listener = PubNubCallback(self)
-            pubnub.add_listener(pubnub_listener)
-            pubnub.subscribe().channels(self.wink.pubnub_channel).execute()
-        else:
-            CHANNELS.append(self.wink.pubnub_channel)
+        SUBSCRIPTION_HANDLER.add_subscription(self.wink.pubnub_channel(),
+                                              self._pubnub_update)
+
+    def _pubnub_update(self, message):
+        self.wink.pubnub_update(message)
+        self.update_ha_state()
 
     @property
     def unique_id(self):
@@ -152,6 +141,7 @@ class WinkDevice(Entity):
             return self.wink.battery_level * 100
 =======
         return self.wink.battery_level * 100
+<<<<<<< HEAD
 
 class PubNubCallback(SubscribeCallback):
     def __init__(self, entity):
@@ -173,3 +163,5 @@ class PubNubCallback(SubscribeCallback):
         self.entity.wink.pubnub_update(json.loads(json_data))
         self.entity.update_ha_state()
 >>>>>>> idk
+=======
+>>>>>>> First test of pubnub_wink
