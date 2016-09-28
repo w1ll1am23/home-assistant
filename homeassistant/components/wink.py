@@ -10,7 +10,9 @@ import voluptuous as vol
 
 from homeassistant.helpers import discovery
 from homeassistant.const import CONF_ACCESS_TOKEN, ATTR_BATTERY_LEVEL, \
-                                CONF_EMAIL, CONF_PASSWORD
+                                CONF_EMAIL, CONF_PASSWORD, \
+                                EVENT_HOMEASSISTANT_START, \
+                                EVENT_HOMEASSISTANT_STOP
 from homeassistant.helpers.entity import Entity
 import homeassistant.helpers.config_validation as cv
 
@@ -80,6 +82,17 @@ def setup(hass, config):
     global SUBSCRIPTION_HANDLER
     SUBSCRIPTION_HANDLER = pubnub_wink.PubNubWinkHandler(pywink.get_subscription_key())
 
+    def start_subscription(event):
+        """Start the pubnub subscription."""
+        SUBSCRIPTION_HANDLER.subscribe()
+
+    def stop_subscription(event):
+        """Stop the pubnub subscription."""
+        SUBSCRIPTION_HANDLER.unsubscribe()
+
+    hass.bus.listen(EVENT_HOMEASSISTANT_START, start_subscription)
+    hass.bus.listen(EVENT_HOMEASSISTANT_STOP, stop_subscription)
+
     # Load components for the devices in Wink that we support
     for component in WINK_COMPONENTS:
         discovery.load_platform(hass, component, DOMAIN, {}, config)
@@ -94,7 +107,7 @@ class WinkDevice(Entity):
 
         self.wink = wink
         self._battery = self.wink.battery_level
-        SUBSCRIPTION_HANDLER.add_subscription(self.wink.pubnub_channel(),
+        SUBSCRIPTION_HANDLER.add_subscription(self.wink.pubnub_channel,
                                               self._pubnub_update)
 
     def _pubnub_update(self, message):
