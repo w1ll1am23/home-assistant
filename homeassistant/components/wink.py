@@ -58,8 +58,9 @@ WINK_COMPONENTS = [
 def setup(hass, config):
     """Setup the Wink component."""
     import pywink
+    import pywinksub
 
-    user_agent = config[DOMAIN][CONF_USER_AGENT]
+    user_agent = config[DOMAIN].get(CONF_USER_AGENT)
 
     if user_agent:
         pywink.set_user_agent(user_agent)
@@ -76,11 +77,8 @@ def setup(hass, config):
         pywink.set_wink_credentials(email, password, client_id,
                                     client_secret)
 
-    from pubnub.pnconfiguration import PNConfiguration
-    from pubnub.pubnub import PubNub
-    pywink.set_bearer_token(config[DOMAIN][CONF_ACCESS_TOKEN])
     global SUBSCRIPTION_HANDLER
-    SUBSCRIPTION_HANDLER = pubnub_wink.PubNubWinkHandler(pywink.get_subscription_key())
+    SUBSCRIPTION_HANDLER = pywinksub.PubNubWinkHandler(pywink.get_subscription_key())
 
     def start_subscription(event):
         """Start the pubnub subscription."""
