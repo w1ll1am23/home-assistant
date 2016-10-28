@@ -147,32 +147,5 @@ class WinkDevice(Entity):
     @property
     def _battery_level(self):
         """Return the battery level."""
-<<<<<<< HEAD
         if self.wink.battery_level is not None:
             return self.wink.battery_level * 100
-=======
-        return self.wink.battery_level * 100
-<<<<<<< HEAD
-
-class PubNubCallback(SubscribeCallback):
-    def __init__(self, entity):
-        self.entity = entity
-
-    def status(self, pubnub, status):
-        if status.operation == PNOperationType.PNSubscribeOperation \
-                and status.category == PNStatusCategory.PNConnectedCategory:
-            print("connected")
-
-    def presence(self, pubnub, presence):
-        pass
-
-    def message(self, pubnub, message):
-        if 'data' in message.message:
-            json_data = json.dumps(message.message.get('data'))
-        else:
-            json_data = message.message
-        self.entity.wink.pubnub_update(json.loads(json_data))
-        self.entity.update_ha_state()
->>>>>>> idk
-=======
->>>>>>> First test of pubnub_wink
