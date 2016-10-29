@@ -108,10 +108,14 @@ class WinkDevice(Entity):
         SUBSCRIPTION_HANDLER.add_subscription(self.wink.pubnub_channel,
                                               self._pubnub_update)
 
-    def _pubnub_update(self, message):
-        self.wink.pubnub_update(message)
-        self.update_ha_state()
-
+    def _pubnub_update(self, message, channel):
+        try:
+            self.wink.pubnub_update(json.loads(message))
+            self.update_ha_state()
+        except ValueError:
+            _LOGGER.error("Error on pubnub update for " + self.wink.name())
+            self.update_ha_state(True)
+            
     @property
     def unique_id(self):
         """Return the ID of this Wink device."""
