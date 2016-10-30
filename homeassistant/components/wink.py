@@ -108,9 +108,9 @@ class WinkDevice(Entity):
         SUBSCRIPTION_HANDLER.add_subscription(self.wink.pubnub_channel,
                                               self._pubnub_update)
 
-    def _pubnub_update(self, message, channel):
+    def _pubnub_update(self, message):
         try:
-            self.wink.pubnub_update(json.loads(message))
+            self.wink.pubnub_update(message)
             self.update_ha_state()
         except ValueError:
             _LOGGER.error("Error on pubnub update for " + self.wink.name())
