@@ -112,10 +112,10 @@ class WinkDevice(Entity):
         try:
             self.wink.pubnub_update(message)
             self.update_ha_state()
-        except ValueError:
-            _LOGGER.error("Error on pubnub update for " + self.wink.name())
+        except (ValueError, KeyError):
+            _LOGGER.error("Error on pubnub update for " + self.name)
             self.update_ha_state(True)
-            
+
     @property
     def unique_id(self):
         """Return the ID of this Wink device."""
