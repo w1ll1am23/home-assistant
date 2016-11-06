@@ -112,7 +112,7 @@ class WinkDevice(Entity):
         try:
             self.wink.pubnub_update(message)
             self.update_ha_state()
-        except (ValueError, KeyError):
+        except (ValueError, KeyError, AttributeError):
             _LOGGER.error("Error on pubnub update for " + self.name)
             self.update_ha_state(True)
 
