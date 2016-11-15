@@ -16,7 +16,10 @@ from homeassistant.const import CONF_ACCESS_TOKEN, ATTR_BATTERY_LEVEL, \
 from homeassistant.helpers.entity import Entity
 import homeassistant.helpers.config_validation as cv
 
-REQUIREMENTS = ['python-wink==0.10.0']
+REQUIREMENTS = ['python-wink==0.10.0',
+                'https://github.com/w1ll1am23/pywinksub/archive/'
+                '79142d07f9e2716929a23cd3ff888f1d05d052ab.zip#'
+                'pywinksub==0.0.1']
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -110,10 +113,16 @@ class WinkDevice(Entity):
 
     def _pubnub_update(self, message):
         try:
-            self.wink.pubnub_update(message)
-            self.update_ha_state()
+            if message is None:
+                _LOGGER.error("Error on pubnub update for " + self.name + \
+                              " pollin API for current state")
+                self.update_ha_state(True)
+            else:
+                self.wink.pubnub_update(message)
+                self.update_ha_state()
         except (ValueError, KeyError, AttributeError):
-            _LOGGER.error("Error on pubnub update for " + self.name)
+            _LOGGER.error("Error in pubnub JSON for " + self.name + \
+                          " pollin API for current state")
             self.update_ha_state(True)
 
     @property
