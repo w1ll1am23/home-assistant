@@ -17,9 +17,9 @@ from homeassistant.helpers.entity import Entity
 import homeassistant.helpers.config_validation as cv
 
 REQUIREMENTS = ['python-wink==0.10.0',
-                'https://github.com/w1ll1am23/pywinksub/archive/'
-                '79142d07f9e2716929a23cd3ff888f1d05d052ab.zip#'
-                'pywinksub==0.0.1']
+                'https://github.com/w1ll1am23/pubnubsub-handler/archive/'
+                '4687fb830a032a192c05ed4661c98aaf196ac0b3.zip#'
+                'pubnubsub-handler==0.0.2']
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -61,7 +61,7 @@ WINK_COMPONENTS = [
 def setup(hass, config):
     """Setup the Wink component."""
     import pywink
-    import pywinksub
+    from pubnubsubhandler import PubNubSubscriptionHandler
 
     user_agent = config[DOMAIN].get(CONF_USER_AGENT)
 
@@ -81,7 +81,9 @@ def setup(hass, config):
                                     client_secret)
 
     global SUBSCRIPTION_HANDLER
-    SUBSCRIPTION_HANDLER = pywinksub.PubNubWinkHandler(pywink.get_subscription_key())
+    SUBSCRIPTION_HANDLER = PubNubSubscriptionHandler(
+        pywink.get_subscription_key(),
+        pywink.wink_api_fetch)
 
     def start_subscription(event):
         """Start the pubnub subscription."""
