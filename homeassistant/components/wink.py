@@ -93,8 +93,14 @@ def setup(hass, config):
         """Stop the pubnub subscription."""
         SUBSCRIPTION_HANDLER.unsubscribe()
 
+    def restart_subscription(event):
+        """Restart the pubnub subscription."""
+        SUBSCRIPTION_HANDLER.resubscribe()
+
     hass.bus.listen(EVENT_HOMEASSISTANT_START, start_subscription)
     hass.bus.listen(EVENT_HOMEASSISTANT_STOP, stop_subscription)
+
+    hass.services.register(DOMAIN, 'resubscribe', restart_subscription)
 
     # Load components for the devices in Wink that we support
     for component in WINK_COMPONENTS:
