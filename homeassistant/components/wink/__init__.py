@@ -28,7 +28,7 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.config import load_yaml_config_file
 from homeassistant.util.json import load_json, save_json
 
-REQUIREMENTS = ['python-wink==1.7.0', 'pubnubsub-handler==1.0.2']
+REQUIREMENTS = ['python-wink==1.7.1', 'pubnubsub-handler==1.0.2']
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -177,7 +177,7 @@ def _request_app_setup(hass, config):
             setup(hass, config)
             return
         else:
-            error_msg = ("Your input was invalid. Please try again.")
+            error_msg = "Your input was invalid. Please try again."
             _configurator = hass.data[DOMAIN]['configuring'][DOMAIN]
             configurator.notify_errors(_configurator, error_msg)
 
@@ -317,11 +317,20 @@ def setup(hass, config):
             return True
 
     pywink.set_user_agent(USER_AGENT)
-    hass.data[DOMAIN]['pubnub'] = PubNubSubscriptionHandler(
-        pywink.get_subscription_key())
+    subscription_key = None
+    try:
+        subscription_key = pywink.get_subscription_key()
+        hass.data[DOMAIN]['pubnub'] = PubNubSubscriptionHandler(
+            subscription_key)
+    except pywink.WinkAPIException:
+        hass.components.persistent_notification.create(
+            "You have no devices paired to your Wink account.<br />"
+            "Please pair a device and restart Home Assistant.",
+            title=DOMAIN)
 
     def _subscribe():
-        hass.data[DOMAIN]['pubnub'].subscribe()
+        if subscription_key is not None:
+            hass.data[DOMAIN]['pubnub'].subscribe()
 
     # Call subscribe after the user sets up wink via the configurator
     # All other methods will complete setup before
