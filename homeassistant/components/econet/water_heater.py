@@ -31,9 +31,11 @@ ATTR_IS_ENABLED = "is_enabled"
 ATTR_SUPPORTS_LEAK = "supports_leak_detection"
 ATTR_SHUT_OFF_VALVE_CLOSED = "shutoff_valve_closed"
 ATTR_TANK_HEALTH = "tank_health"
+ATTR_COMPRESSOR_HEALTH = "compressor_health"
 ATTR_TANK_HOT_WATER_AVAILABILITY = "hot_water_availability"
 ATTR_OVERRIDE_STATUS = "override_status"
 ATTR_ENERGY_USAGE = "todays_energy_usage"
+ATTR_RUNNING = "running"
 
 ECONET_STATE_TO_HA = {
     WaterHeaterOperationMode.ENERGY_SAVING: STATE_ECO,
@@ -91,6 +93,10 @@ class EcoNetWaterHeater(EcoNetEntity, WaterHeaterEntity):
             _attr[ATTR_OVERRIDE_STATUS] = self.water_heater.override_status
         if self.water_heater.todays_energy_usage is not None:
             _attr[ATTR_ENERGY_USAGE] = round(self.water_heater.todays_energy_usage, 2)
+        if self.water_heater.running is not None:
+            _attr[ATTR_RUNNING] = self.water_heater.running
+        if self.water_heater.compressor_health is not None:
+            _attr[ATTR_COMPRESSOR_HEALTH] = self.water_heater.compressor_health
 
         return _attr
 
@@ -112,7 +118,7 @@ class EcoNetWaterHeater(EcoNetEntity, WaterHeaterEntity):
         econet_modes = self.water_heater.modes
         op_list = []
         for mode in econet_modes:
-            if mode is not WaterHeaterOperationMode.UNKNOWN:
+            if mode is not WaterHeaterOperationMode.UNKNOWN and mode is not WaterHeaterOperationMode.VACATION:
                 ha_mode = ECONET_STATE_TO_HA[mode]
                 op_list.append(ha_mode)
         return op_list
