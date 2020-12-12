@@ -17,6 +17,7 @@ from homeassistant.components.climate.const import (
     HVAC_MODE_HEAT,
     HVAC_MODE_OFF,
     SUPPORT_AUX_HEAT,
+    SUPPORT_TARGET_HUMIDITY,
     SUPPORT_FAN_MODE,
     SUPPORT_TARGET_TEMPERATURE,
     SUPPORT_TARGET_TEMPERATURE_RANGE,
@@ -89,7 +90,10 @@ class EcoNetThermostat(EcoNetEntity, ClimateEntity):
     @property
     def supported_features(self):
         """Return the list of supported features."""
-        return SUPPORT_FLAGS_THERMOSTAT
+        if self.thermostat.supports_humidifier:
+            return SUPPORT_FLAGS_THERMOSTAT | SUPPORT_TARGET_HUMIDITY
+        else:
+            return SUPPORT_FLAGS_THERMOSTAT
 
     @property
     def device_state_attributes(self):
@@ -113,7 +117,7 @@ class EcoNetThermostat(EcoNetEntity, ClimateEntity):
     @property
     def target_humidity(self):
         """Return the humidity we try to reach."""
-        if self.thermostat.dehumidifier_enabled:
+        if self.thermostat.supports_humidifier:
             return self.thermostat.dehumidifier_set_point
         else:
             return None
@@ -192,6 +196,10 @@ class EcoNetThermostat(EcoNetEntity, ClimateEntity):
         hvac_mode_to_set = HA_STATE_TO_ECONET.get(hvac_mode)
         self.thermostat.set_mode(hvac_mode_to_set)
 
+    def set_humidity(self, humidity: int):
+        """Set new target humidity."""
+        self.thermostat.set_dehumidifier_set_point(humidity)
+
     @property
     def fan_mode(self):
         """Return the current fan mode"""
@@ -238,3 +246,13 @@ class EcoNetThermostat(EcoNetEntity, ClimateEntity):
     def max_temp(self):
         """Return the maximum temperature"""
         return self.thermostat.set_point_limits[1]
+
+    @property
+    def min_humidity(self) -> int:
+        """Return the minimum humidity."""
+        return self.thermostat.dehumidifier_set_point_limits[0]
+
+    @property
+    def max_humidity(self) -> int:
+        """Return the maximum humidity."""
+        return self.thermostat.dehumidifier_set_point_limits[1]
