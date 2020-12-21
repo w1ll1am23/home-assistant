@@ -134,10 +134,9 @@ class EcoNetWaterHeater(EcoNetEntity, WaterHeaterEntity):
             if self.water_heater.supports_away:
                 return SUPPORT_FLAGS_HEATER | SUPPORT_AWAY_MODE
             return SUPPORT_FLAGS_HEATER
-        else:
-            if self.water_heater.supports_away:
-                return SUPPORT_TARGET_TEMPERATURE | SUPPORT_AWAY_MODE
-            return SUPPORT_TARGET_TEMPERATURE
+        if self.water_heater.supports_away:
+            return SUPPORT_TARGET_TEMPERATURE | SUPPORT_AWAY_MODE
+        return SUPPORT_TARGET_TEMPERATURE
 
     def set_temperature(self, **kwargs):
         """Set new target temperature."""

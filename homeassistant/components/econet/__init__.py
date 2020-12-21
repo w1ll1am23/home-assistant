@@ -85,7 +85,7 @@ async def async_setup_entry(hass, config_entry):
         return False
     except PyeconetError as err:
         _LOGGER.error("Config entry failed: %s", err)
-        raise ConfigEntryNotReady
+        raise ConfigEntryNotReady from err
 
     equipment = await api.get_equipment_by_type([EquipmentType.WATER_HEATER])
     hass.data[DOMAIN][API_CLIENT][config_entry.entry_id] = api
