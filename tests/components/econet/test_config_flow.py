@@ -2,10 +2,10 @@
 from pyeconet.errors import InvalidCredentialsError
 
 from homeassistant.components.econet import DOMAIN
-from homeassistant.config_entries import SOURCE_IMPORT, SOURCE_USER
+from homeassistant.config_entries import SOURCE_USER
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
-from homeassistant.data_entry_flow import RESULT_TYPE_ABORT, RESULT_TYPE_FORM
+from homeassistant.data_entry_flow import RESULT_TYPE_FORM
 
 from tests.async_mock import AsyncMock, patch
 
