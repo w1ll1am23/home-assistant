@@ -34,7 +34,7 @@ async def test_auth_fail(
     assert result
     assert result["type"] == RESULT_TYPE_FORM
     assert result["errors"] == {
-        "base": "invalid_auth",
+        "base": "invalid_credentials",
     }
 
     econetapi_mock.login.side_effect = Exception("Connection error.")
@@ -50,24 +50,3 @@ async def test_auth_fail(
     assert result["errors"] == {
         "base": "cannot_connect",
     }
-
-
-@patch("homeassistant.components.econet.async_setup", return_value=True)
-@patch("homeassistant.components.econet.async_setup_entry", return_value=True)
-@patch("homeassistant.components.econet.common.EcoNetApiInterface")
-async def test_import_fail(
-    econetapi_mock, async_setup_entry_mock, async_setup_mock, hass: HomeAssistant
-) -> None:
-    """Test authorization failures."""
-    econetapi_mock.login = AsyncMock(side_effect=InvalidCredentialsError())
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN,
-        context={"source": SOURCE_IMPORT},
-        data={
-            CONF_EMAIL: "admin@localhost.com",
-            CONF_PASSWORD: "password0",
-        },
-    )
-    assert result
-    assert result["type"] == RESULT_TYPE_ABORT
-    assert result["reason"] == "invalid_auth"
