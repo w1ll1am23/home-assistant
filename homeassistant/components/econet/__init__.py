@@ -9,7 +9,7 @@ from pyeconet.errors import InvalidCredentialsError, PyeconetError
 import voluptuous as vol
 
 from homeassistant.config_entries import SOURCE_IMPORT
-from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, TEMP_FAHRENHEIT
+from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, TEMP_FAHRENHEIT
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity import Entity
@@ -28,7 +28,7 @@ CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: vol.Schema(
             {
-                vol.Optional(CONF_USERNAME): cv.string,
+                vol.Optional(CONF_EMAIL): cv.string,
                 vol.Optional(CONF_PASSWORD): cv.string,
             }
         )
@@ -57,7 +57,7 @@ async def async_setup(hass, config):
             DOMAIN,
             context={"source": SOURCE_IMPORT},
             data={
-                CONF_USERNAME: conf[CONF_USERNAME],
+                CONF_EMAIL: conf[CONF_EMAIL],
                 CONF_PASSWORD: conf[CONF_PASSWORD],
             },
         )
@@ -71,11 +71,11 @@ async def async_setup_entry(hass, config_entry):
     entry_updates = {}
     if not config_entry.unique_id:
         # If the config entry doesn't already have a unique ID, set one:
-        entry_updates["unique_id"] = config_entry.data[CONF_USERNAME]
+        entry_updates["unique_id"] = config_entry.data[CONF_EMAIL]
     if entry_updates:
         hass.config_entries.async_update_entry(config_entry, **entry_updates)
 
-    email = config_entry.data.get(CONF_USERNAME)
+    email = config_entry.data.get(CONF_EMAIL)
     password = config_entry.data.get(CONF_PASSWORD)
 
     try:

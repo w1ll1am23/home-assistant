@@ -4,7 +4,7 @@ from pyeconet.errors import InvalidCredentialsError, PyeconetError
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
+from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 
 from .const import DOMAIN  # pylint: disable=unused-import
 
@@ -19,17 +19,17 @@ class EcoNetFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         """Initialize the config flow."""
         self.data_schema = vol.Schema(
             {
-                vol.Required(CONF_USERNAME): str,
+                vol.Required(CONF_EMAIL): str,
                 vol.Required(CONF_PASSWORD): str,
             }
         )
 
-    async def _show_form(self, errors=None):
+    async def _show_form(self, error=None):
         """Show the form to the user."""
         return self.async_show_form(
             step_id="user",
             data_schema=self.data_schema,
-            errors=errors if errors else {},
+            errors={"base": error} if error else {},
         )
 
     async def async_step_import(self, import_config):
@@ -41,22 +41,22 @@ class EcoNetFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         if not user_input:
             return await self._show_form()
 
-        await self.async_set_unique_id(user_input[CONF_USERNAME])
+        await self.async_set_unique_id(user_input[CONF_EMAIL])
         self._abort_if_unique_id_configured()
 
         try:
             await EcoNetApiInterface.login(
-                user_input[CONF_USERNAME], user_input[CONF_PASSWORD]
+                user_input[CONF_EMAIL], user_input[CONF_PASSWORD]
             )
         except InvalidCredentialsError:
-            return await self._show_form(errors={"base": "invalid_credentials"})
+            return await self._show_form(error="invalid_auth")
         except PyeconetError:
-            return await self._show_form(errors={"base": "cannot_connect"})
+            return await self._show_form(error="cannot_connect")
 
         return self.async_create_entry(
-            title=user_input[CONF_USERNAME],
+            title=user_input[CONF_EMAIL],
             data={
-                CONF_USERNAME: user_input[CONF_USERNAME],
+                CONF_EMAIL: user_input[CONF_EMAIL],
                 CONF_PASSWORD: user_input[CONF_PASSWORD],
             },
         )
