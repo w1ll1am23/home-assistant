@@ -6,12 +6,10 @@ import logging
 from pyeconet import EcoNetApiInterface
 from pyeconet.equipment import EquipmentType
 from pyeconet.errors import InvalidCredentialsError, PyeconetError
-import voluptuous as vol
 
 from homeassistant.config_entries import SOURCE_IMPORT
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, TEMP_FAHRENHEIT
 from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import async_track_time_interval
 
@@ -23,18 +21,7 @@ ATTR_ON_VACATION = "on_vacation"
 ATTR_IN_USE = "in_use"
 ATTR_WIFI_SIGNAL = "wifi_signal_strength"
 ATTR_ALERT_COUNT = "alert_count"
-
-CONFIG_SCHEMA = vol.Schema(
-    {
-        DOMAIN: vol.Schema(
-            {
-                vol.Optional(CONF_EMAIL): cv.string,
-                vol.Optional(CONF_PASSWORD): cv.string,
-            }
-        )
-    },
-    extra=vol.ALLOW_EXTRA,
-)
+PLATFORMS = ["water_heater"]
 
 INTERVAL = timedelta(minutes=60)
 
@@ -69,9 +56,6 @@ async def async_setup(hass, config):
 async def async_setup_entry(hass, config_entry):
     """Set up EcoNet as config entry."""
     entry_updates = {}
-    if not config_entry.unique_id:
-        # If the config entry doesn't already have a unique ID, set one:
-        entry_updates["unique_id"] = config_entry.data[CONF_EMAIL]
     if entry_updates:
         hass.config_entries.async_update_entry(config_entry, **entry_updates)
 
@@ -91,7 +75,7 @@ async def async_setup_entry(hass, config_entry):
     hass.data[DOMAIN][API_CLIENT][config_entry.entry_id] = api
     hass.data[DOMAIN][EQUIPMENT][config_entry.entry_id] = equipment
 
-    for component in ["water_heater"]:
+    for component in PLATFORMS:
         hass.async_create_task(
             hass.config_entries.async_forward_entry_setup(config_entry, component)
         )
@@ -117,12 +101,13 @@ async def async_unload_entry(hass, entry):
     """Unload a EcoNet config entry."""
     tasks = [
         hass.config_entries.async_forward_entry_unload(entry, component)
-        for component in ["water_heater"]
+        for component in PLATFORMS
     ]
 
     await asyncio.gather(*tasks)
 
     hass.data[DOMAIN][API_CLIENT].pop(entry.entry_id)
+    hass.data[DOMAIN][EQUIPMENT].pop(entry.entry_id)
 
     return True
 
@@ -133,6 +118,10 @@ class EcoNetEntity(Entity):
     def __init__(self, econet):
         """Initialize."""
         self._econet = econet
+
+    async def async_added_to_hass(self):
+        """Subscribe to device events."""
+        await super().async_added_to_hass()
         self._econet.set_update_callback(self.on_update_received)
 
     def on_update_received(self):

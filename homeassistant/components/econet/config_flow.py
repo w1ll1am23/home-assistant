@@ -39,19 +39,30 @@ class EcoNetFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input=None):
         """Handle the start of the config flow."""
         if not user_input:
-            return await self._show_form()
+            return self.async_show_form(
+                step_id="user",
+                data_schema=self.data_schema,
+            )
 
         await self.async_set_unique_id(user_input[CONF_EMAIL])
         self._abort_if_unique_id_configured()
+        errors = None
 
         try:
             await EcoNetApiInterface.login(
                 user_input[CONF_EMAIL], user_input[CONF_PASSWORD]
             )
         except InvalidCredentialsError:
-            return await self._show_form(error="invalid_auth")
+            errors = "invalid_auth"
         except PyeconetError:
-            return await self._show_form(error="cannot_connect")
+            errors = "cannot_connect"
+
+        if errors:
+            return self.async_show_form(
+                step_id="user",
+                data_schema=self.data_schema,
+                errors={"base": errors},
+            )
 
         return self.async_create_entry(
             title=user_input[CONF_EMAIL],

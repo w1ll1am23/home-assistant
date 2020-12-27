@@ -20,7 +20,7 @@ async def test_bad_credentials(hass):
     assert result["step_id"] == SOURCE_USER
 
     with patch(
-        "homeassistant.components.econet.common.EcoNetApiInterface.login",
+        "pyeconet.EcoNetApiInterface.login",
         side_effect=InvalidCredentialsError(),
     ), patch("homeassistant.components.econet.async_setup", return_value=True), patch(
         "homeassistant.components.econet.async_setup_entry", return_value=True
@@ -50,7 +50,7 @@ async def test_generic_error_from_library(hass):
     assert result["step_id"] == SOURCE_USER
 
     with patch(
-        "homeassistant.components.econet.common.EcoNetApiInterface.login",
+        "pyeconet.EcoNetApiInterface.login",
         side_effect=PyeconetError(),
     ), patch("homeassistant.components.econet.async_setup", return_value=True), patch(
         "homeassistant.components.econet.async_setup_entry", return_value=True
@@ -80,7 +80,7 @@ async def test_auth_worked(hass):
     assert result["step_id"] == SOURCE_USER
 
     with patch(
-        "homeassistant.components.econet.common.EcoNetApiInterface.login",
+        "pyeconet.EcoNetApiInterface.login",
         return_value=EcoNetApiInterface,
     ), patch("homeassistant.components.econet.async_setup", return_value=True), patch(
         "homeassistant.components.econet.async_setup_entry", return_value=True
