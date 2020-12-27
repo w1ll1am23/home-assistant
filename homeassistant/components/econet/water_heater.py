@@ -32,6 +32,7 @@ ATTR_COMPRESSOR_HEALTH = "compressor_health"
 ATTR_TANK_HOT_WATER_AVAILABILITY = "hot_water_availability"
 ATTR_OVERRIDE_STATUS = "override_status"
 ATTR_ENERGY_USAGE = "todays_energy_usage"
+ATTR_WATER_USAGE = "todays_water_usage"
 ATTR_RUNNING = "running"
 
 ECONET_STATE_TO_HA = {
@@ -96,6 +97,8 @@ class EcoNetWaterHeater(EcoNetEntity, WaterHeaterEntity):
             _attr[ATTR_OVERRIDE_STATUS] = self.water_heater.override_status
         if self.water_heater.todays_energy_usage is not None:
             _attr[ATTR_ENERGY_USAGE] = round(self.water_heater.todays_energy_usage, 2)
+        if self.water_heater.todays_water_usage is not None:
+            _attr[ATTR_WATER_USAGE] = round(self.water_heater.todays_water_usage, 2)
         if self.water_heater.running is not None:
             _attr[ATTR_RUNNING] = self.water_heater.running
         if self.water_heater.compressor_health is not None:
@@ -180,6 +183,7 @@ class EcoNetWaterHeater(EcoNetEntity, WaterHeaterEntity):
     async def async_update(self):
         """Get the latest energy usage."""
         await self.water_heater.get_energy_usage()
+        await self.water_heater.get_water_usage()
         self._poll = False
 
     def turn_away_mode_on(self):
