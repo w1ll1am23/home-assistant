@@ -24,14 +24,6 @@ class EcoNetFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             }
         )
 
-    async def _show_form(self, error=None):
-        """Show the form to the user."""
-        return self.async_show_form(
-            step_id="user",
-            data_schema=self.data_schema,
-            errors={"base": error} if error else {},
-        )
-
     async def async_step_import(self, import_config):
         """Import a config entry from configuration.yaml."""
         return await self.async_step_user(import_config)
