@@ -8,7 +8,7 @@ from pyeconet.equipment import EquipmentType
 from pyeconet.errors import InvalidCredentialsError, PyeconetError
 
 from homeassistant.config_entries import SOURCE_IMPORT
-from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, TEMP_FAHRENHEIT
+from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import async_track_time_interval
@@ -17,11 +17,7 @@ from .const import API_CLIENT, DOMAIN, EQUIPMENT
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTR_ON_VACATION = "on_vacation"
-ATTR_IN_USE = "in_use"
-ATTR_WIFI_SIGNAL = "wifi_signal_strength"
-ATTR_ALERT_COUNT = "alert_count"
-PLATFORMS = ["water_heater"]
+PLATFORMS = ["water_heater", "binary_sensor", "sensor"]
 
 INTERVAL = timedelta(minutes=60)
 
@@ -37,7 +33,6 @@ async def async_setup(hass, config):
         return True
 
     conf = config[DOMAIN]
-    _LOGGER.error(conf)
 
     hass.async_create_task(
         hass.config_entries.flow.async_init(
@@ -84,12 +79,12 @@ async def async_setup_entry(hass, config_entry):
 
     async def resubscribe(now):
         """Resubscribe to the MQTT updates."""
-        api.unsubscribe()
+        await hass.async_add_executor_job(api.unsubscribe)
         api.subscribe()
 
     async def fetch_update(now):
         """Fetch the latest changes from the API."""
-        api.refresh_equipment()
+        await api.refresh_equipment()
 
     async_track_time_interval(hass, resubscribe, INTERVAL)
     async_track_time_interval(hass, fetch_update, INTERVAL + timedelta(minutes=1))
@@ -119,15 +114,6 @@ class EcoNetEntity(Entity):
         """Initialize."""
         self._econet = econet
 
-    async def async_added_to_hass(self):
-        """Subscribe to device events."""
-        await super().async_added_to_hass()
-        self._econet.set_update_callback(self.on_update_received)
-
-    def on_update_received(self):
-        """Update was pushed from the ecoent API."""
-        self.schedule_update_ha_state()
-
     @property
     def available(self):
         """Return if the the device is online or not."""
@@ -141,28 +127,6 @@ class EcoNetEntity(Entity):
             "manufacturer": "Rheem",
             "name": self._econet.device_name,
         }
-
-    @property
-    def is_away_mode_on(self):
-        """Return true if away mode is on."""
-        return self._econet.away
-
-    @property
-    def temperature_unit(self):
-        """Return the unit of measurement."""
-        return TEMP_FAHRENHEIT
-
-    @property
-    def device_state_attributes(self):
-        """Return the state attributes."""
-        _attr = {
-            ATTR_ON_VACATION: self._econet.vacation,
-            ATTR_IN_USE: self._econet.running,
-        }
-        if self._econet.wifi_signal is not None:
-            _attr[ATTR_WIFI_SIGNAL] = self._econet.wifi_signal
-        _attr[ATTR_ALERT_COUNT] = self._econet.alert_count
-        return _attr
 
     @property
     def name(self):

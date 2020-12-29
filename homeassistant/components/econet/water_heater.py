@@ -18,22 +18,15 @@ from homeassistant.components.water_heater import (
     SUPPORT_TARGET_TEMPERATURE,
     WaterHeaterEntity,
 )
+from homeassistant.const import TEMP_FAHRENHEIT
 
 from . import EcoNetEntity
 from .const import DOMAIN, EQUIPMENT
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTR_IS_ENABLED = "is_enabled"
-ATTR_SUPPORTS_LEAK = "supports_leak_detection"
-ATTR_SHUT_OFF_VALVE_CLOSED = "shutoff_valve_closed"
-ATTR_TANK_HEALTH = "tank_health"
-ATTR_COMPRESSOR_HEALTH = "compressor_health"
-ATTR_TANK_HOT_WATER_AVAILABILITY = "hot_water_availability"
-ATTR_OVERRIDE_STATUS = "override_status"
-ATTR_ENERGY_USAGE = "todays_energy_usage"
-ATTR_WATER_USAGE = "todays_water_usage"
-ATTR_RUNNING = "running"
+ATTR_ON_VACATION = "on_vacation"
+ATTR_IN_USE = "in_use"
 
 ECONET_STATE_TO_HA = {
     WaterHeaterOperationMode.ENERGY_SAVING: STATE_ECO,
@@ -78,32 +71,30 @@ class EcoNetWaterHeater(EcoNetEntity, WaterHeaterEntity):
             # Water heater running state has changed so check usage on next update
             self._poll = True
             self._running = self.water_heater.running
-        super().on_update_received()
+        self.schedule_update_ha_state()
+
+    async def async_added_to_hass(self):
+        """Subscribe to device events."""
+        await super().async_added_to_hass()
+        self._econet.set_update_callback(self.on_update_received)
+
+    @property
+    def is_away_mode_on(self):
+        """Return true if away mode is on."""
+        return self._econet.away
+
+    @property
+    def temperature_unit(self):
+        """Return the unit of measurement."""
+        return TEMP_FAHRENHEIT
 
     @property
     def device_state_attributes(self):
-        """Return the optional device state attributes."""
-        _attr = super().device_state_attributes
-        _attr[ATTR_SUPPORTS_LEAK] = self.water_heater.leak_installed
-        if self.water_heater.tank_hot_water_availability:
-            _attr[
-                ATTR_TANK_HOT_WATER_AVAILABILITY
-            ] = self.water_heater.tank_hot_water_availability
-        if self.water_heater.has_shutoff_valve:
-            _attr[ATTR_SHUT_OFF_VALVE_CLOSED] = not self.water_heater.shutoff_valve_open
-        if self.water_heater.tank_health:
-            _attr[ATTR_TANK_HEALTH] = self.water_heater.tank_health
-        if self.water_heater.override_status:
-            _attr[ATTR_OVERRIDE_STATUS] = self.water_heater.override_status
-        if self.water_heater.todays_energy_usage is not None:
-            _attr[ATTR_ENERGY_USAGE] = round(self.water_heater.todays_energy_usage, 2)
-        if self.water_heater.todays_water_usage is not None:
-            _attr[ATTR_WATER_USAGE] = round(self.water_heater.todays_water_usage, 2)
-        if self.water_heater.running is not None:
-            _attr[ATTR_RUNNING] = self.water_heater.running
-        if self.water_heater.compressor_health is not None:
-            _attr[ATTR_COMPRESSOR_HEALTH] = self.water_heater.compressor_health
-
+        """Return the state attributes."""
+        _attr = {
+            ATTR_ON_VACATION: self._econet.vacation,
+            ATTR_IN_USE: self._econet.running,
+        }
         return _attr
 
     @property
