@@ -4,7 +4,6 @@ import logging
 from pyeconet.equipment import EquipmentType
 
 from homeassistant.const import (
-    ENERGY_KILO_BRITISH_THERMAL_UNIT,
     ENERGY_KILO_WATT_HOUR,
     PERCENTAGE,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
@@ -14,6 +13,7 @@ from homeassistant.const import (
 from . import EcoNetEntity
 from .const import DOMAIN, EQUIPMENT
 
+ENERGY_KILO_BRITISH_THERMAL_UNIT = "kBtu"
 TANK_HEALTH = "tank_health"
 AVAILIBLE_HOT_WATER = "availible_hot_water"
 COMPRESSOR_HEALTH = "compressor_health"
