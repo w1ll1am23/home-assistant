@@ -19,7 +19,7 @@ from .const import API_CLIENT, DOMAIN, EQUIPMENT
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = ["water_heater", "binary_sensor", "sensor"]
+PLATFORMS = ["binary_sensor", "sensor", "water_heater"]
 PUSH_UPDATE = "econet.push_update"
 
 INTERVAL = timedelta(minutes=60)
