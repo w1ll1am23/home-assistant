@@ -9,7 +9,9 @@ from pyeconet.errors import InvalidCredentialsError, PyeconetError
 
 from homeassistant.config_entries import SOURCE_IMPORT
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
+from homeassistant.core import callback
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import async_track_time_interval
 
@@ -18,6 +20,7 @@ from .const import API_CLIENT, DOMAIN, EQUIPMENT
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = ["water_heater", "binary_sensor", "sensor"]
+PUSH_UPDATE = "econet.push_update"
 
 INTERVAL = timedelta(minutes=60)
 
@@ -77,6 +80,13 @@ async def async_setup_entry(hass, config_entry):
 
     api.subscribe()
 
+    def update_published():
+        """Handle a push update."""
+        async_dispatcher_send(hass, PUSH_UPDATE)
+
+    for _eqip in equipment[EquipmentType.WATER_HEATER]:
+        _eqip.set_update_callback(update_published)
+
     async def resubscribe(now):
         """Resubscribe to the MQTT updates."""
         await hass.async_add_executor_job(api.unsubscribe)
@@ -113,6 +123,20 @@ class EcoNetEntity(Entity):
     def __init__(self, econet):
         """Initialize."""
         self._econet = econet
+
+    async def async_added_to_hass(self):
+        """Subscribe to device events."""
+        await super().async_added_to_hass()
+        self.async_on_remove(
+            self.hass.helpers.dispatcher.async_dispatcher_connect(
+                PUSH_UPDATE, self.on_update_received
+            )
+        )
+
+    @callback
+    def on_update_received(self):
+        """Update was pushed from the ecoent API."""
+        self.schedule_update_ha_state()
 
     @property
     def available(self):

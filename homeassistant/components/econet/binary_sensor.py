@@ -70,11 +70,3 @@ class EcoNetBinarySensor(EcoNetEntity, BinarySensorEntity):
         return (
             f"{self._econet.device_id}_{self._econet.device_name}_{self._device_name}"
         )
-
-    @property
-    def should_poll(self) -> bool:
-        """Return True if entity has to be polled for state.
-
-        False if entity pushes its state to HA.
-        """
-        return True
