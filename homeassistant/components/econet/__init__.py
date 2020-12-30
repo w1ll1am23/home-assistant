@@ -7,7 +7,6 @@ from pyeconet import EcoNetApiInterface
 from pyeconet.equipment import EquipmentType
 from pyeconet.errors import InvalidCredentialsError, PyeconetError
 
-from homeassistant.config_entries import SOURCE_IMPORT
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import callback
 from homeassistant.exceptions import ConfigEntryNotReady
@@ -27,32 +26,15 @@ INTERVAL = timedelta(minutes=60)
 
 async def async_setup(hass, config):
     """Set up the EcoNet component."""
-
-    hass.data[DOMAIN] = {}
-    hass.data[DOMAIN][API_CLIENT] = {}
-    hass.data[DOMAIN][EQUIPMENT] = {}
-
-    if DOMAIN not in config:
-        return True
-
-    conf = config[DOMAIN]
-
-    hass.async_create_task(
-        hass.config_entries.flow.async_init(
-            DOMAIN,
-            context={"source": SOURCE_IMPORT},
-            data={
-                CONF_EMAIL: conf[CONF_EMAIL],
-                CONF_PASSWORD: conf[CONF_PASSWORD],
-            },
-        )
-    )
-
     return True
 
 
 async def async_setup_entry(hass, config_entry):
     """Set up EcoNet as config entry."""
+    hass.data[DOMAIN] = {}
+    hass.data[DOMAIN][API_CLIENT] = {}
+    hass.data[DOMAIN][EQUIPMENT] = {}
+
     entry_updates = {}
     if entry_updates:
         hass.config_entries.async_update_entry(config_entry, **entry_updates)

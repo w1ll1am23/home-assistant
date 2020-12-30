@@ -3,7 +3,7 @@ from pyeconet.api import EcoNetApiInterface
 from pyeconet.errors import InvalidCredentialsError, PyeconetError
 
 from homeassistant.components.econet import DOMAIN
-from homeassistant.config_entries import SOURCE_IMPORT, SOURCE_USER
+from homeassistant.config_entries import SOURCE_USER
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.data_entry_flow import RESULT_TYPE_CREATE_ENTRY, RESULT_TYPE_FORM
 
@@ -78,35 +78,6 @@ async def test_auth_worked(hass):
     )
     assert result["type"] == RESULT_TYPE_FORM
     assert result["step_id"] == SOURCE_USER
-
-    with patch(
-        "pyeconet.EcoNetApiInterface.login",
-        return_value=EcoNetApiInterface,
-    ), patch("homeassistant.components.econet.async_setup", return_value=True), patch(
-        "homeassistant.components.econet.async_setup_entry", return_value=True
-    ):
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"],
-            user_input={
-                CONF_EMAIL: "admin@localhost.com",
-                CONF_PASSWORD: "password0",
-            },
-        )
-
-        assert result["type"] == RESULT_TYPE_CREATE_ENTRY
-        assert result["data"] == {
-            CONF_EMAIL: "admin@localhost.com",
-            CONF_PASSWORD: "password0",
-        }
-
-
-async def test_config_with_configuration_yaml(hass):
-    """Test when provided credentials are accepted."""
-
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN, context={"source": SOURCE_IMPORT}
-    )
-    assert result["type"] == RESULT_TYPE_FORM
 
     with patch(
         "pyeconet.EcoNetApiInterface.login",

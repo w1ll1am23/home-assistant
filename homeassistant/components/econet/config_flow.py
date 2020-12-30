@@ -24,10 +24,6 @@ class EcoNetFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             }
         )
 
-    async def async_step_import(self, import_config):
-        """Import a config entry from configuration.yaml."""
-        return await self.async_step_user(import_config)
-
     async def async_step_user(self, user_input=None):
         """Handle the start of the config flow."""
         if not user_input:
