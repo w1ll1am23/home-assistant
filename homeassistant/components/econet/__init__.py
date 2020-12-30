@@ -18,7 +18,7 @@ from .const import API_CLIENT, DOMAIN, EQUIPMENT
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = ["binary_sensor", "sensor", "water_heater"]
+PLATFORMS = ["binary_sensor", "climate", "sensor", "water_heater"]
 PUSH_UPDATE = "econet.push_update"
 
 INTERVAL = timedelta(minutes=60)
@@ -51,7 +51,9 @@ async def async_setup_entry(hass, config_entry):
         _LOGGER.error("Config entry failed: %s", err)
         raise ConfigEntryNotReady from err
 
-    equipment = await api.get_equipment_by_type([EquipmentType.WATER_HEATER])
+    equipment = await api.get_equipment_by_type(
+        [EquipmentType.THERMOSTAT, EquipmentType.WATER_HEATER]
+    )
     hass.data[DOMAIN][API_CLIENT][config_entry.entry_id] = api
     hass.data[DOMAIN][EQUIPMENT][config_entry.entry_id] = equipment
 
