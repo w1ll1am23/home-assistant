@@ -11,7 +11,7 @@ from homeassistant.config_entries import SOURCE_IMPORT
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import callback
 from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers.dispatcher import async_dispatcher_send
+from homeassistant.helpers.dispatcher import dispatcher_send
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import async_track_time_interval
 
@@ -82,7 +82,7 @@ async def async_setup_entry(hass, config_entry):
 
     def update_published():
         """Handle a push update."""
-        async_dispatcher_send(hass, PUSH_UPDATE)
+        dispatcher_send(hass, PUSH_UPDATE)
 
     for _eqip in equipment[EquipmentType.WATER_HEATER]:
         _eqip.set_update_callback(update_published)
@@ -136,7 +136,7 @@ class EcoNetEntity(Entity):
     @callback
     def on_update_received(self):
         """Update was pushed from the ecoent API."""
-        self.schedule_update_ha_state()
+        self.async_write_ha_state()
 
     @property
     def available(self):

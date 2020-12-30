@@ -19,6 +19,7 @@ from homeassistant.components.water_heater import (
     WaterHeaterEntity,
 )
 from homeassistant.const import TEMP_FAHRENHEIT
+from homeassistant.core import callback
 
 from . import EcoNetEntity
 from .const import DOMAIN, EQUIPMENT
@@ -65,13 +66,14 @@ class EcoNetWaterHeater(EcoNetEntity, WaterHeaterEntity):
         self.econet_state_to_ha = {}
         self.ha_state_to_econet = {}
 
+    @callback
     def on_update_received(self):
         """Update was pushed from the ecoent API."""
         if self._running != self.water_heater.running:
             # Water heater running state has changed so check usage on next update
             self._poll = True
             self._running = self.water_heater.running
-        self.schedule_update_ha_state()
+        self.async_write_ha_state()
 
     @property
     def is_away_mode_on(self):
